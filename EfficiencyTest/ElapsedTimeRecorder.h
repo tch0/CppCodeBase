@@ -21,9 +21,17 @@ public:
     {
         last = std::chrono::high_resolution_clock::now();
     }
-    void showElapsedTime()
+    void showElapsedTimeInUs()
+    {
+        std::cout << "Elapsed time: " << getElapsedTimeInUs() << " us" << std::endl;
+    }
+    void showElapsedTimeInMs()
     {
         std::cout << "Elapsed time: " << getElapsedTimeInMs() << " ms" << std::endl;
+    }
+    void showElapsedTimeInSecond()
+    {
+        std::cout << "Elapsed time: " << getElapsedTimeInSecond() << " s" << std::endl;
     }
     double getElapsedTimeInUs()
     {
@@ -37,9 +45,17 @@ public:
     {
         return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - last).count() / 1.0e9;
     }
+    double getTotalElapsedTimeInUs()
+    {
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - begin).count() / 1.0e3;
+    }
     double getTotalElapsedTimeInMs()
     {
         return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - begin).count() / 1.0e6;
+    }
+    double getTotalElapsedTimeInSecond()
+    {
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - begin).count() / 1.0e9;
     }
 private:
     std::string name;
