@@ -23,6 +23,30 @@ std::ostream& operator<<(std::ostream& os, const std::pair<T1, T2>& p)
     return os;
 }
 
+// operator << for tuple
+template<std::size_t Index, typename... Args>
+std::ostream& printTuple(std::ostream& os, const std::tuple<Args...>& t)
+{
+    if constexpr (Index == 0) // first element
+    {
+        os << "(";
+    }
+    if constexpr (Index < sizeof...(Args) - 1)
+    {
+        os << std::get<Index>(t) << ", ";
+        return printTuple<Index + 1, Args...>(os, t);
+    }
+    else // last element
+    {
+        return os << std::get<Index>(t) << ")";
+    }
+}
+template<typename... Args>
+std::ostream& operator<<(std::ostream& os, const std::tuple<Args...>& t)
+{
+    return printTuple<0, Args...>(os, t);
+}
+
 // manipulator for printing first N elements of a sequence
 template<typename Iterator>
 class PrintSequenceElements
