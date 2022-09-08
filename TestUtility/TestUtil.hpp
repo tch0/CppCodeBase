@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iterator>
 #include <utility>
+#include <tuple>
 
 // parsing first argument: -d to show details
 bool parseDetailFlag(int argc, char const *argv[])
