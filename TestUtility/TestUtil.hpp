@@ -1,5 +1,4 @@
-#ifndef TESTUTIL_HPP
-#define TESTUTIL_HPP
+#pragma once
 
 #include <iostream>
 #include <iomanip>
@@ -10,10 +9,28 @@
 #include <utility>
 #include <tuple>
 
-// parsing first argument: -d to show details
-bool parseDetailFlag(int argc, char const *argv[])
+enum class DetailFlag
 {
-    return argc >= 2 && std::string(argv[1]) == "-d";
+    ShowNothing,        // show final result only, basic output
+    ShowFailedOnly,     // show failed results only
+    ShowAllResults      // show passed and failed results
+};
+
+// parsing first argument: -d to show details
+DetailFlag parseDetailFlag(int argc, char const *argv[])
+{
+    if (argc >= 2 && std::string(argv[1]) == "-all")
+    {
+        return DetailFlag::ShowAllResults;
+    }
+    else if (argc >= 2 && std::string(argv[1]) == "-fo")
+    {
+        return DetailFlag::ShowFailedOnly;
+    }
+    else
+    {
+        return DetailFlag::ShowNothing;
+    }
 }
 
 // operator << for pair
@@ -91,28 +108,35 @@ PrintSequenceElements<T*> printArrayElements(T* arr, std::size_t size, std::size
 // test utilities
 class TestUtil
 {
+private:
+    bool showDetails(bool result)
+    {
+        return (detail == DetailFlag::ShowFailedOnly && !result) || detail == DetailFlag::ShowAllResults;
+    }
 public:
-    TestUtil(bool _show, const std::string& _target, int _lineNumberWidth = 4, int _maxSequenceLength = 20) 
+    TestUtil(DetailFlag _detail, const std::string& _target, int _targetAlignWidth = 20, int _lineNumberAlignWidth = 4, int _maxSequenceLength = 20, int _countAlignWidth = 3)
         : passedCount(0)
         , totalCount(0)
-        , showDetails(_show)
+        , detail(_detail)
         , target(_target)
-        , lineNumberWidth(_lineNumberWidth)
+        , targetAlignWidth(_targetAlignWidth)
+        , lineNumberAlignWidth(_lineNumberAlignWidth)
         , maxSequenceLength(_maxSequenceLength)
+        , countAlignWidth(_countAlignWidth)
     {
-        if (showDetails)
+        if (detail != DetailFlag::ShowNothing)
         {
-            std::cout << "Test of " << target << ": " << std::endl;
+            std::cout << "Test result of " << target << ": " << std::endl;
         }
     }
 
     void showFinalResult()
     {
         std::cout << std::boolalpha << std::dec;
-        std::cout << "Test result of " << target << ": "
-            << passedCount << "/" << totalCount << " passed"
+        std::cout << std::setw(targetAlignWidth) << std::right << target << " : "
+            << std::setw(countAlignWidth) << std::right << passedCount << " / " << std::setw(countAlignWidth) << std::left << totalCount << " passed"
             << (passedCount == totalCount ? "" : " --------------------------> failed") << std::endl;
-        if (showDetails)
+        if (detail != DetailFlag::ShowNothing)
         {
             std::cout << std::endl;
         }
@@ -124,10 +148,10 @@ public:
         bool res = (t1 == t2);
         passedCount += (res ? 1 : 0);
         totalCount++;
-        if (showDetails)
+        if (showDetails(res))
         {
             std::cout << std::boolalpha << std::dec;
-            std::cout << loc.file_name() << ":" << std::setw(lineNumberWidth) << loc.line() << ": "
+            std::cout << loc.file_name() << ":" << std::setw(lineNumberAlignWidth) << loc.line() << ": "
                 << "assertEqual: " << "left value( " << t1 << " ), right value( " << t2 << " ) : "
                 << (res ? "passed" : "==================== failed") << std::endl;
         }
@@ -139,10 +163,10 @@ public:
         bool res = (t1 != t2);
         passedCount += (res ? 1 : 0);
         totalCount++;
-        if (showDetails)
+        if (showDetails(res))
         {
             std::cout << std::boolalpha << std::dec;
-            std::cout << loc.file_name() << ":" << std::setw(lineNumberWidth) << loc.line() << ": "
+            std::cout << loc.file_name() << ":" << std::setw(lineNumberAlignWidth) << loc.line() << ": "
                 << "assertNotEqual: " << "left value( " << t1 << " ), right value( " << t2 << " ) : "
                 << (res ? "passed" : "==================== failed") << std::endl;
         }
@@ -154,10 +178,10 @@ public:
         bool res = std::equal(c1.begin(), c1.end(), c2.begin());
         passedCount += (res ? 1 : 0);
         totalCount++;
-        if (showDetails)
+        if (showDetails(res))
         {
             std::cout << std::boolalpha << std::dec;
-            std::cout << loc.file_name() << ":" << std::setw(lineNumberWidth) << loc.line() << ": "
+            std::cout << loc.file_name() << ":" << std::setw(lineNumberAlignWidth) << loc.line() << ": "
                 << "assertSequenceEqual: " << (res ? "passed" : "==================== failed")
                 << "\n\tleft sequence: " << printContainerElememts(c1, maxSequenceLength)
                 << "\n\tright sequence: " << printContainerElememts(c2, maxSequenceLength) << std::endl;
@@ -170,10 +194,10 @@ public:
         bool res = std::equal(arr1, arr1 + size, arr2);
         passedCount += (res ? 1 : 0);
         totalCount++;
-        if (showDetails)
+        if (showDetails(res))
         {
             std::cout << std::boolalpha << std::dec;
-            std::cout << loc.file_name() << ":" << std::setw(lineNumberWidth) << loc.line() << ": "
+            std::cout << loc.file_name() << ":" << std::setw(lineNumberAlignWidth) << loc.line() << ": "
                 << "assertArrayEqual: " << (res ? "passed" : "==================== failed")
                 << "\n\tleft array: " << printArrayElements(arr1, size, maxSequenceLength)
                 << "\n\tright array: " << printArrayElements(arr2, size, maxSequenceLength) << std::endl;
@@ -187,10 +211,10 @@ public:
         bool res = std::equal(b1, e1, b2);
         passedCount += (res ? 1 : 0);
         totalCount++;
-        if (showDetails)
+        if (showDetails(res))
         {
             std::cout << std::boolalpha << std::dec;
-            std::cout << loc.file_name() << ":" << std::setw(lineNumberWidth) << loc.line() << ": "
+            std::cout << loc.file_name() << ":" << std::setw(lineNumberAlignWidth) << loc.line() << ": "
                 << "assertRangeEqual: " << (res ? "passed" : "==================== failed")
                 << "\n\tleft range: " << PrintSequenceElements(b1, e1, maxSequenceLength)
                 << "\n\tright range: " << PrintSequenceElements(b2, std::next(b2, std::distance(b1, e1)), maxSequenceLength)  << std::endl;
@@ -202,10 +226,10 @@ public:
         bool res = std::distance(b1, e1) == std::distance(b2, e2) && std::equal(b1, e1, b2);
         passedCount += (res ? 1 : 0);
         totalCount++;
-        if (showDetails)
+        if (showDetails(res))
         {
             std::cout << std::boolalpha << std::dec;
-            std::cout << loc.file_name() << ":" << std::setw(lineNumberWidth) << loc.line() << ": "
+            std::cout << loc.file_name() << ":" << std::setw(lineNumberAlignWidth) << loc.line() << ": "
                 << "assertRangeEqual: " << (res ? "passed" : "==================== failed")
                 << "\n\tleft range: " << PrintSequenceElements(b1, e1, maxSequenceLength)
                 << "\n\tright range: " << PrintSequenceElements(b2, e2, maxSequenceLength)  << std::endl;
@@ -218,10 +242,10 @@ public:
         bool res = std::is_sorted(b, e, cmp);
         passedCount += (res ? 1 : 0);
         totalCount++;
-        if (showDetails)
+        if (showDetails(res))
         {
             std::cout << std::boolalpha << std::dec;
-            std::cout << loc.file_name() << ":" << std::setw(lineNumberWidth) << loc.line() << ": "
+            std::cout << loc.file_name() << ":" << std::setw(lineNumberAlignWidth) << loc.line() << ": "
                 << "assertSorted: " << (res ? "passed" : "==================== failed")
                 << "\n\tsequence: " << PrintSequenceElements(b, e, maxSequenceLength) << std::endl;
         }
@@ -233,10 +257,10 @@ public:
         bool res = (std::size(c1) == std::size(c2) && std::is_permutation(c1.begin(), c1.end(), c2.begin()));
         passedCount += (res ? 1 : 0);
         totalCount++;
-        if (showDetails)
+        if (showDetails(res))
         {
             std::cout << std::boolalpha << std::dec;
-            std::cout << loc.file_name() << ":" << std::setw(lineNumberWidth) << loc.line() << ": "
+            std::cout << loc.file_name() << ":" << std::setw(lineNumberAlignWidth) << loc.line() << ": "
                 << "assertSetEqual: " << (res ? "passed" : "==================== failed")
                 << "\n\tleft set: " << printContainerElememts(c1, maxSequenceLength)
                 << "\n\tright set: " << printContainerElememts(c2, maxSequenceLength) << std::endl;
@@ -248,10 +272,10 @@ public:
         bool res = (std::distance(b1, e1) == std::distance(b2, e2) && std::is_permutation(b1, e1, b2));
         passedCount += (res ? 1 : 0);
         totalCount++;
-        if (showDetails)
+        if (showDetails(res))
         {
             std::cout << std::boolalpha << std::dec;
-            std::cout << loc.file_name() << ":" << std::setw(lineNumberWidth) << loc.line() << ": "
+            std::cout << loc.file_name() << ":" << std::setw(lineNumberAlignWidth) << loc.line() << ": "
                 << "assertSetEqual: " << (res ? "passed" : "==================== failed")
                 << "\n\tleft set: " << PrintSequenceElements(b1, e1, maxSequenceLength)
                 << "\n\tright set: " << PrintSequenceElements(b2, e2, maxSequenceLength)  << std::endl;
@@ -260,10 +284,10 @@ public:
 private:
     int passedCount;
     int totalCount;
-    int lineNumberWidth; // output width of line number
-    int maxSequenceLength; // max output length of a sequence
-    bool showDetails;
+    DetailFlag detail;
     std::string target;
+    int targetAlignWidth;       // align width of target string
+    int lineNumberAlignWidth;   // align width of line number
+    int maxSequenceLength;      // max output length of a sequence
+    int countAlignWidth;        // align width of count number
 };
-
-#endif
