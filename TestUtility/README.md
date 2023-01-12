@@ -10,8 +10,8 @@
 #include "TestUtil.hpp"
 int main(int argc, char const *argv[])
 {
-    bool showDetails = parseDetailFlag(argc, argv); // -all for passed and failed details, -fo for failed details only
-    TestUtil util(showDetails, "infomation");
+    auto detail = parseDetailFlag(argc, argv); // -all for passed and failed details, -fo for failed details only
+    TestUtil util(detail, "infomation");
     {
         ...
         util.assertEqual(xxx, yyy);
