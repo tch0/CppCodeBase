@@ -17,7 +17,7 @@ enum class DetailFlag
 };
 
 // parsing first argument: -d to show details
-DetailFlag parseDetailFlag(int argc, char const *argv[])
+inline DetailFlag parseDetailFlag(int argc, char const *argv[])
 {
     if (argc >= 2 && std::string(argv[1]) == "-all")
     {
